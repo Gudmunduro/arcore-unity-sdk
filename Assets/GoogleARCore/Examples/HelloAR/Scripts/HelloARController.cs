@@ -84,35 +84,34 @@ namespace GoogleARCore.Examples.HelloAR
             _UpdateApplicationLifecycle();
 
             // Hide snackbar when currently tracking at least one plane.
-            Session.GetTrackables<DetectedPlane>(m_AllPlanes);
+            Session.GetTrackables<DetectedPlane>(m_AllPlanes); // Fær alla fleti sem hægt er að nota til að setja hluti á (eins og borð og gólf)
             bool showSearchingUI = true;
-            for (int i = 0; i < m_AllPlanes.Count; i++)
+            for (int i = 0; i < m_AllPlanes.Count; i++) // For loopa í gegnum fletina
             {
-                if (m_AllPlanes[i].TrackingState == TrackingState.Tracking)
+                if (m_AllPlanes[i].TrackingState == TrackingState.Tracking) // Ef ARCore er að tracka staðsetningu á fletinum
                 {
-                    showSearchingUI = false;
+                    showSearchingUI = false; // showSearchingUI verður notað á efitr til að kveikja eða slökkva á uiinu sem kemur þegar það er verið að leita að flötum 
                     break;
                 }
             }
 
-            SearchingForPlaneUI.SetActive(showSearchingUI);
+            SearchingForPlaneUI.SetActive(showSearchingUI); // Kverkjir eða slekkur á uiinu sem er sýnt þegar það er verið að leyta að flötum
 
-            // If the player has not touched the screen, we are done with this update.
+
             Touch touch;
             if (Input.touchCount < 1 || (touch = Input.GetTouch(0)).phase != TouchPhase.Began)
             {
-                return;
+                return;// Ef það er ekki búið að snerta skjáin mun það returna úr update hérna
             }
 
-            // Raycast against the location the player touched to search for planes.
+            // Skoðar hvort það sé einhver flötur á staðnum sem spilandin snerti
             TrackableHit hit;
             TrackableHitFlags raycastFilter = TrackableHitFlags.PlaneWithinPolygon |
                 TrackableHitFlags.FeaturePointWithSurfaceNormal;
 
             if (Frame.Raycast(touch.position.x, touch.position.y, raycastFilter, out hit))
             {
-                // Use hit pose and camera pose to check if hittest is from the
-                // back of the plane, if it is, no need to create the anchor.
+                // Checkar hvort staðurinn sem bakvið flötin
                 if ((hit.Trackable is DetectedPlane) &&
                     Vector3.Dot(FirstPersonCamera.transform.position - hit.Pose.position,
                         hit.Pose.rotation * Vector3.up) < 0)
@@ -121,7 +120,7 @@ namespace GoogleARCore.Examples.HelloAR
                 }
                 else
                 {
-                    // Choose the Andy model for the Trackable that got hit.
+                    // Velur modelið sem er síðan búið til á flötinum
                     GameObject prefab;
                     if (hit.Trackable is FeaturePoint)
                     {
@@ -132,17 +131,16 @@ namespace GoogleARCore.Examples.HelloAR
                         prefab = AndyPlanePrefab;
                     }
 
-                    // Instantiate Andy model at the hit pose.
+                    // Býr til objectið fyrir það
                     var andyObject = Instantiate(prefab, hit.Pose.position, hit.Pose.rotation);
 
-                    // Compensate for the hitPose rotation facing away from the raycast (i.e. camera).
+                    // Snýr objectinu að myndavélinni
                     andyObject.transform.Rotate(0, k_ModelRotation, 0, Space.Self);
 
-                    // Create an anchor to allow ARCore to track the hitpoint as understanding of the physical
-                    // world evolves.
+                    // Býr til anchor sem hjálpar ARCore að halda utan um staðsetninguna á hlutinum
                     var anchor = hit.Trackable.CreateAnchor(hit.Pose);
 
-                    // Make Andy model a child of the anchor.
+                    // Setur objectið sem child af anchorinu
                     andyObject.transform.parent = anchor.transform;
                 }
             }
