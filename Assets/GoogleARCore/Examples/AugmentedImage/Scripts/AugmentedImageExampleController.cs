@@ -57,37 +57,36 @@ namespace GoogleARCore.Examples.AugmentedImage
                 Application.Quit();
             }
 
-            // Check that motion tracking is tracking.
+            // Checkar hvort það sé kveikt á motion tracking
             if (Session.Status != SessionStatus.Tracking)
             {
                 return;
             }
 
-            // Get updated augmented images for this frame.
+            // Fær allar myndir sem er hægt að nota
             Session.GetTrackables<AugmentedImage>(m_TempAugmentedImages, TrackableQueryFilter.Updated);
 
-            // Create visualizers and anchors for updated augmented images that are tracking and do not previously
-            // have a visualizer. Remove visualizers for stopped images.
+            // Býr til visualizer fyrir myndir sem var verið að finna og tekur þær sem eru komnar út úr frameinu
             foreach (var image in m_TempAugmentedImages)
             {
                 AugmentedImageVisualizer visualizer = null;
-                m_Visualizers.TryGetValue(image.DatabaseIndex, out visualizer);
-                if (image.TrackingState == TrackingState.Tracking && visualizer == null)
+                m_Visualizers.TryGetValue(image.DatabaseIndex, out visualizer); // Checkar hvort að myndi sé nú þegar inn í gagnagrunninum og með visualizer
+                if (image.TrackingState == TrackingState.Tracking && visualizer == null) // Ef það er ekki og ef það er verið að tracka myndina
                 {
-                    // Create an anchor to ensure that ARCore keeps tracking this augmented image.
-                    Anchor anchor = image.CreateAnchor(image.CenterPose);
-                    visualizer = (AugmentedImageVisualizer)Instantiate(AugmentedImageVisualizerPrefab, anchor.transform);
-                    visualizer.Image = image;
-                    m_Visualizers.Add(image.DatabaseIndex, visualizer);
+                    Anchor anchor = image.CreateAnchor(image.CenterPose); // Býr til anchor fyrir hana (sem ARCore notar til að halda utan um staðsetninguna)
+                    visualizer = (AugmentedImageVisualizer)Instantiate(AugmentedImageVisualizerPrefab, anchor.transform); // Býr til nýan visualizer sem gameobject
+                    visualizer.Image = image; // Setur myndina á visualizernum í það sem hún á að vera
+                    m_Visualizers.Add(image.DatabaseIndex, visualizer); // Bætir visualizernum í gagnagrunnin
                 }
-                else if (image.TrackingState == TrackingState.Stopped && visualizer != null)
+                else if (image.TrackingState == TrackingState.Stopped && visualizer != null) // Ef það er en myndin er ekki lengur inn í frameinu
                 {
-                    m_Visualizers.Remove(image.DatabaseIndex);
-                    GameObject.Destroy(visualizer.gameObject);
+                    m_Visualizers.Remove(image.DatabaseIndex); // Tekur hana úr gagnagrunninum
+                    GameObject.Destroy(visualizer.gameObject); // Eyðir geymobjectinu fyrir visualizerinn
                 }
+                // Annars ef hún er til og er ennþá enni í frameinu þarf ekki að gera neitt
             }
 
-            // Show the fit-to-scan overlay if there are no images that are Tracking.
+            // Sýnir ui fyrir þegar engin mynd finnst
             foreach (var visualizer in m_Visualizers.Values)
             {
                 if (visualizer.Image.TrackingState == TrackingState.Tracking)
