@@ -133,6 +133,9 @@ namespace GoogleARCore.Examples.HelloAR
 
                     // Býr til objectið fyrir það
                     var andyObject = Instantiate(prefab, hit.Pose.position, hit.Pose.rotation);
+                    
+                    // Byrjar nýtt coroutine sem lætur hann hoppa áfram
+                    StartCoroutine("AndyJump", andyObject);
 
                     // Snýr objectinu að myndavélinni
                     andyObject.transform.Rotate(0, k_ModelRotation, 0, Space.Self);
@@ -144,6 +147,17 @@ namespace GoogleARCore.Examples.HelloAR
                     andyObject.transform.parent = anchor.transform;
                 }
             }
+        }
+        
+        private IEnumerator AndyJump(GameObject andyGo)
+        {
+            while(true)
+            {
+                andyGo.GetComponent<Rigidbody>().AddForce(transform.up * 10);
+                andyGo.GetComponent<Rigidbody>().AddForce(transform.forward * 2.5f);
+                yield return new WaitForSeconds(2);
+            }
+            
         }
 
         /// <summary>
